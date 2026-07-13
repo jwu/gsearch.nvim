@@ -1,27 +1,135 @@
-*gsearch.txt*    Search workflow plugin for Neovim
+*gsearch.txt*                 Ripgrep search workflow for Neovim
 
 ==============================================================================
 Contents                                                *gsearch* *gsearch-contents*
 
          1. Intro .................................... |gsearch-intro|
          2. Requirements ............................. |gsearch-requirements|
-         3. Development status ....................... |gsearch-status|
+         3. Commands ................................. |gsearch-commands|
+         4. Results window ........................... |gsearch-results|
+         5. Configuration ............................ |gsearch-configuration|
+         6. Lua API .................................. |gsearch-api|
 
 ==============================================================================
 1. Intro                                                        *gsearch-intro*
 
-Gsearch is a Neovim plugin for search workflows.
+Gsearch is a Neovim 0.11+ global-search plugin ported from the gsearch
+feature in exvim-lite.  It searches Neovim's current working directory with
+ripgrep.  Searches use smart case and include hidden and ignored files.
+
+Gsearch does not read .exvim/config.json and never changes the current working
+directory.
 
 ==============================================================================
 2. Requirements                                          *gsearch-requirements*
 
   - Neovim 0.11 or higher
+  - ripgrep, available as `rg` on $PATH
+
+Use `:checkhealth gsearch` to verify that ripgrep is available.
 
 ==============================================================================
-3. Development status                                           *gsearch-status*
+3. Commands                                                  *gsearch-commands*
 
-The public behavior, commands, mappings, configuration, and Lua API have not
-been specified yet.
+                                                                *:GS*
+:GS {pattern}          Search for {pattern}.  This command is retained for
+                       compatibility with exvim-lite.
+
+                                                                *:EXSearchCWord*
+:EXSearchCWord         Search for the word below the cursor.  This command is
+                       retained for compatibility with exvim-lite.
+
+==============================================================================
+4. Results window                                              *gsearch-results*
+
+A search opens a bottom split named `-Search Results-`.  The buffer is not
+listed, has no swap file, and is retained after the split is closed.
+
+The following mappings are buffer-local; Gsearch creates no global mappings.
+
+    <F1>                         Toggle the help text.
+    <Esc>                        Close the results split.
+    <Space>                      Toggle normal and zoomed window height.
+    <CR>, <2-LeftMouse>          Open the selected result.
+    <S-CR>, <S-2-LeftMouse>      Open the selected result in a preview window.
+    <leader>r                    Keep text matching the `/` register.
+    <leader>fr                   Keep file names matching the `/` register.
+    <leader>d                    Remove text matching the `/` register.
+    <leader>fd                   Remove file names matching the `/` register.
+
+The results buffer also defines these buffer-local commands.  Each takes a Vim
+regular expression:
+
+    :R {pattern}                 Keep matching result text.
+    :FR {pattern}                Keep matching file names.
+    :D {pattern}                 Remove matching result text.
+    :FD {pattern}                Remove matching file names.
+
+When a result is selected, Gsearch opens the file at the recorded line and
+tries to relocate to the recorded text.  This handles lines that changed after
+ripgrep completed.  The results window is focused again afterward.
+
+==============================================================================
+5. Configuration                                      *gsearch-configuration*
+
+Configuration is optional.  `setup()` options are:
+
+    win_size                    Results height. Default: 15.
+    win_size_zoom               Zoomed results height. Default: 40.
+    win_pos                     `bottom` (default) or `top`.
+    enable_sort                 Sort small result sets. Default: true.
+    sort_lines_threshold        Maximum lines to sort. Default: 100.
+    globs                       Extra ripgrep command arguments. Default: ''.
+
+Example: >lua
+    require('gsearch').setup({
+      win_pos = 'top',
+      globs = "-g '*.lua' -g '!vendor/**'",
+    })
+<
+                                                        *gsearch-legacy-config*
+For exvim-lite compatibility, setup is not required.  The following globals
+are read when their corresponding setup option was not provided:
+
+    g:ex_search_winsize
+    g:ex_search_winsize_zoom
+    g:ex_search_winpos
+    g:ex_search_enable_sort
+    g:ex_search_sort_lines_threshold
+    g:ex_search_globs
+
+Gsearch sets their exvim-lite defaults during plugin loading only when they are
+not already defined.  `g:ex_search_enable_sort` accepts 0 to disable sorting.
+
+`globs` and `g:ex_search_globs` are appended verbatim to the ripgrep command.
+Only supply trusted ripgrep arguments.
+
+==============================================================================
+6. Lua API                                                *gsearch-api*
+
+                                                                    *gsearch.setup()*
+require('gsearch').setup({opts})
+    Configure Gsearch.  Calling this is optional.
+
+                                                                    *gsearch.search()*
+require('gsearch').search({pattern})
+    Search the current working directory.
+
+                                                              *gsearch.search_cword()*
+require('gsearch').search_cword()
+    Search for the word below the cursor.
+
+                                                                     *gsearch.open()*
+require('gsearch').open()
+    Open the results window without searching.
+
+                                                                   *gsearch.toggle()*
+require('gsearch').toggle()
+    Toggle the results window.
+
+                                                                    *gsearch.close()*
+require('gsearch').close()
+    Close the results window.
 
 ==============================================================================
 vim: tw=78 ts=2 sw=2 sts=2 et ft=help
