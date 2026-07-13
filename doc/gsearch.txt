@@ -1,0 +1,27 @@
+*gsearch.txt*    Search workflow plugin for Neovim
+
+==============================================================================
+Contents                                                *gsearch* *gsearch-contents*
+
+         1. Intro .................................... |gsearch-intro|
+         2. Requirements ............................. |gsearch-requirements|
+         3. Development status ....................... |gsearch-status|
+
+==============================================================================
+1. Intro                                                        *gsearch-intro*
+
+Gsearch is a Neovim plugin for search workflows.
+
+==============================================================================
+2. Requirements                                          *gsearch-requirements*
+
+  - Neovim 0.11 or higher
+
+==============================================================================
+3. Development status                                           *gsearch-status*
+
+The public behavior, commands, mappings, configuration, and Lua API have not
+been specified yet.
+
+==============================================================================
+vim: tw=78 ts=2 sw=2 sts=2 et ft=help
