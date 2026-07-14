@@ -1,5 +1,6 @@
 local api = vim.api
 local results = require 'gsearch.results'
+local windows = require 'gsearch.window'
 
 local M = {}
 
@@ -406,7 +407,7 @@ function M.select(preview)
 
   confirmed_line = cursor[1]
   highlight(buffer)
-  local edit = get_edit_window()
+  local edit = windows.last_edit_window() or get_edit_window()
   api.nvim_set_current_win(edit)
 
   if preview then

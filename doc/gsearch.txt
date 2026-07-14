@@ -66,7 +66,9 @@ regular expression:
 
 When a result is selected, Gsearch opens the file at the recorded line and
 tries to relocate to the recorded text.  This handles lines that changed after
-ripgrep completed.  The results window is focused again afterward.
+ripgrep completed.  If win-buf-op.nvim is installed, Gsearch uses its latest
+recorded editing window; otherwise it uses the first current window with an
+empty `buftype`.  The results window is focused again afterward.
 
 ==============================================================================
 5. Configuration                                      *gsearch-configuration*
