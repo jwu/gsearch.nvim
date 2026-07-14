@@ -26,7 +26,7 @@ current working directory.
 
 ### Results window
 
-`GS` opens a bottom split named `-Search Results-`. Its buffer-local mappings
+`GS` opens a bottom split named `[GSearch Results]`. Its buffer-local mappings
 are:
 
 | Key | Action |

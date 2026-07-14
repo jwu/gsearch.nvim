@@ -42,7 +42,7 @@ Use `:checkhealth gsearch` to verify that ripgrep is available.
 ==============================================================================
 4. Results window                                              *gsearch-results*
 
-A search opens a bottom split named `-Search Results-`.  The buffer is not
+A search opens a bottom split named `[GSearch Results]`.  The buffer is not
 listed, has no swap file, and is retained after the split is closed.
 
 The following mappings are buffer-local; Gsearch creates no global mappings.

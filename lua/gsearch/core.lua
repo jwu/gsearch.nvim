@@ -186,7 +186,7 @@ local function add_buffer_mappings(buffer)
 end
 
 local function initialize_buffer(buffer)
-  api.nvim_buf_set_name(buffer, '-Search Results-')
+  api.nvim_buf_set_name(buffer, '[GSearch Results]')
   api.nvim_set_option_value('buftype', 'nofile', { buf = buffer })
   api.nvim_set_option_value('bufhidden', 'hide', { buf = buffer })
   api.nvim_set_option_value('swapfile', false, { buf = buffer })
