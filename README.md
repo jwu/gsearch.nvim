@@ -1,32 +1,77 @@
 # gsearch.nvim
 
-A Neovim 0.11+ global-search plugin, ported from the `gsearch` feature in
-[jwu/exvim-lite](https://github.com/jwu/exvim-lite).
+A Neovim plugin for searching the current working directory with ripgrep and
+reviewing results in a persistent split.
+
+## Features
+
+- Smart-case ripgrep searches from Neovim's current working directory
+- Hidden files included in searches
+- One project-local ignore file, selected in this order: `.rgignore`,
+  `.ignore`, `.gitignore`
+- Persistent results split with filtering, result previews, and result opening
+- Optional sorting of small result sets by file path and line number
+- Optional configuration through `require('gsearch').setup()`
+- `:checkhealth gsearch` support
 
 ## Requirements
 
 - Neovim 0.11+
 - [ripgrep](https://github.com/BurntSushi/ripgrep) (`rg`) on `$PATH`
 
-Run `:checkhealth gsearch` to verify ripgrep.
+## Installation
+
+Using [lazy.nvim](https://github.com/folke/lazy.nvim):
+
+```lua
+{
+  'jwu/gsearch.nvim',
+}
+```
+
+Using [packer.nvim](https://github.com/wbthomason/packer.nvim):
+
+```lua
+use { 'jwu/gsearch.nvim' }
+```
+
+Using [vim-plug](https://github.com/junegunn/vim-plug):
+
+```vim
+Plug 'jwu/gsearch.nvim'
+```
 
 ## Usage
 
-The plugin works without `setup()`. Searches use Neovim's current working
-directory and ripgrep with smart case, hidden files, and ignored files included.
+Gsearch works without calling `setup()`.
 
 ```vim
 :GS pattern
 :GSearchCWord
 ```
 
-`GS` is retained for compatibility with exvim-lite. This plugin intentionally
-does not load `.exvim/config.json` or change the current working directory.
+Commands:
+
+- `:GS {pattern}`: search for `{pattern}`.
+- `:GSearchCWord`: search for the word under the cursor.
+
+Gsearch does not change the current working directory.
+
+### Ignore files
+
+Gsearch disables ripgrep's automatic ignore-file discovery. It checks only the
+current working directory and passes one ignore file to ripgrep:
+
+1. `.rgignore`
+2. `.ignore`
+3. `.gitignore`
+
+The first existing file is the only ignore file used.
 
 ### Results window
 
-`GS` opens a bottom split named `[GSearch Results]`. Its buffer-local mappings
-are:
+A search opens a bottom split named `[GSearch Results]`. Its buffer-local
+mappings are:
 
 | Key | Action |
 | --- | --- |
@@ -38,21 +83,17 @@ are:
 | `<leader>r` / `<leader>fr` | Keep results matching the `/` register in text / file name |
 | `<leader>d` / `<leader>fd` | Remove results matching the `/` register in text / file name |
 
-The results buffer also provides `:R`, `:FR`, `:D`, and `:FD`, each taking one
-Vim regular expression. They have the same text/file and keep/remove behavior
-as the mappings above.
+The result buffer also provides these commands, each accepting one Vim regular
+expression:
 
-Small result sets are sorted by file path and line number. Selecting a result
-uses its recorded text to relocate the cursor if the file changed after the
-search. When opening the results split or selecting a result,
-[win-buf-op.nvim](https://github.com/jwu/win-buf-op.nvim) is used to find its
-recorded last editing window. Otherwise Gsearch uses the current window when
-its `buftype` is empty, then Neovim's alternate window with an empty
-`buftype`, then the first current-tab window with an empty `buftype`.
+- `:R {pattern}` / `:FR {pattern}`: keep matching text / file names
+- `:D {pattern}` / `:FD {pattern}`: remove matching text / file names
+
+Small result sets are sorted by file path and line number. When opening a
+result, Gsearch uses its recorded text to relocate the cursor if the file
+changed after the search.
 
 ## Configuration
-
-`setup()` is optional:
 
 ```lua
 require('gsearch').setup({
@@ -65,24 +106,40 @@ require('gsearch').setup({
 })
 ```
 
-For exvim-lite compatibility, these globals work without `setup()`:
+Options:
+
+| Option | Default | Description |
+| --- | --- | --- |
+| `win_size` | `15` | Results window height |
+| `win_size_zoom` | `40` | Results window height while zoomed |
+| `win_pos` | `'bottom'` | Results window position; `'top'` is also supported |
+| `enable_sort` | `true` | Sort small result sets |
+| `sort_lines_threshold` | `100` | Largest result set that is sorted |
+| `globs` | `''` | Extra ripgrep command arguments |
+
+`globs` is appended verbatim to the ripgrep command. Only use trusted ripgrep
+arguments.
+
+### Highlight groups
+
+Gsearch defines these highlight groups with a default link to `Visual`. Define
+the groups after the plugin loads to override them:
 
 ```lua
-vim.g.ex_search_winsize = 15
-vim.g.ex_search_winsize_zoom = 40
-vim.g.ex_search_winpos = 'bottom'
-vim.g.ex_search_enable_sort = 1
-vim.g.ex_search_sort_lines_threshold = 100
-vim.g.ex_search_globs = "-g '*.lua' -g '!vendor/**'"
+vim.api.nvim_set_hl(0, 'GsearchConfirm', { link = 'Search' })
+vim.api.nvim_set_hl(0, 'GsearchTarget', { bg = '#3b4252' })
 ```
 
-`globs` and `g:ex_search_globs` are appended verbatim to the `rg` command, so
-only use trusted ripgrep arguments.
+| Group | Used for |
+| --- | --- |
+| `GsearchConfirm` | The selected result in the results window |
+| `GsearchTarget` | The target line after opening or previewing a result |
 
 ## Lua API
 
 ```lua
 local gsearch = require('gsearch')
+
 gsearch.setup({ win_pos = 'top' })
 gsearch.search('pattern')
 gsearch.search_cword()
@@ -91,8 +148,22 @@ gsearch.toggle()
 gsearch.close()
 ```
 
+## Health check
+
+Run:
+
+```vim
+:checkhealth gsearch
+```
+
 ## Development
+
+Tests use [Busted](https://olivinelabs.com/busted/).
 
 ```sh
 just check
 ```
+
+## Documentation
+
+See `:help gsearch` for full vimdoc.

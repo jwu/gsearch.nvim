@@ -13,9 +13,6 @@ local defaults = {
 ---@type GsearchResolvedConfig
 local options = vim.deepcopy(defaults)
 
----@type table<string, boolean>
-local configured = {}
-
 ---@param value unknown
 ---@param name string
 ---@return integer
@@ -66,7 +63,6 @@ function M.setup(user_options)
     if defaults[key] == nil then
       error(('gsearch: unknown setup option: %s'):format(key))
     end
-    configured[key] = true
   end
 
   local merged = vim.tbl_deep_extend('force', options, user_options)
@@ -82,31 +78,7 @@ end
 
 ---@return GsearchResolvedConfig
 function M.get()
-  local config = vim.deepcopy(options)
-
-  -- Keep the original exvim-lite variables usable without requiring setup().
-  if not configured.win_size and vim.g.ex_search_winsize ~= nil then
-    config.win_size = positive_integer(vim.g.ex_search_winsize, 'g:ex_search_winsize')
-  end
-  if not configured.win_size_zoom and vim.g.ex_search_winsize_zoom ~= nil then
-    config.win_size_zoom =
-      positive_integer(vim.g.ex_search_winsize_zoom, 'g:ex_search_winsize_zoom')
-  end
-  if not configured.win_pos and vim.g.ex_search_winpos ~= nil then
-    config.win_pos = window_position(vim.g.ex_search_winpos)
-  end
-  if not configured.enable_sort and vim.g.ex_search_enable_sort ~= nil then
-    config.enable_sort = vim.g.ex_search_enable_sort ~= 0 and vim.g.ex_search_enable_sort ~= false
-  end
-  if not configured.sort_lines_threshold and vim.g.ex_search_sort_lines_threshold ~= nil then
-    config.sort_lines_threshold =
-      positive_integer(vim.g.ex_search_sort_lines_threshold, 'g:ex_search_sort_lines_threshold')
-  end
-  if not configured.globs and vim.g.ex_search_globs ~= nil then
-    config.globs = string(vim.g.ex_search_globs, 'g:ex_search_globs')
-  end
-
-  return config
+  return vim.deepcopy(options)
 end
 
 return M

@@ -13,12 +13,13 @@ Contents                                                *gsearch* *gsearch-conte
 ==============================================================================
 1. Intro                                                        *gsearch-intro*
 
-Gsearch is a Neovim 0.11+ global-search plugin ported from the gsearch
-feature in exvim-lite.  It searches Neovim's current working directory with
-ripgrep.  Searches use smart case and include hidden and ignored files.
+Gsearch is a Neovim 0.11+ global-search plugin.  It searches Neovim's current
+working directory with ripgrep.  Searches use smart case and include hidden
+files.  Gsearch uses one ignore file from the current working directory:
+`.rgignore`, then `.ignore`, then `.gitignore`.  The first file found is the
+only ignore file used.
 
-Gsearch does not read .exvim/config.json and never changes the current working
-directory.
+Gsearch never changes the current working directory.
 
 ==============================================================================
 2. Requirements                                          *gsearch-requirements*
@@ -32,8 +33,7 @@ Use `:checkhealth gsearch` to verify that ripgrep is available.
 3. Commands                                                  *gsearch-commands*
 
                                                                 *:GS*
-:GS {pattern}          Search for {pattern}.  This command is retained for
-                       compatibility with exvim-lite.
+:GS {pattern}          Search for {pattern}.
 
                                                                  *:GSearchCWord*
 :GSearchCWord          Search for the word below the cursor.
@@ -92,22 +92,22 @@ Example: >lua
       globs = "-g '*.lua' -g '!vendor/**'",
     })
 <
-                                                        *gsearch-legacy-config*
-For exvim-lite compatibility, setup is not required.  The following globals
-are read when their corresponding setup option was not provided:
+`globs` is appended verbatim to the ripgrep command.  Only supply trusted
+ripgrep arguments.  Gsearch disables ripgrep's automatic ignore file discovery
+and passes only its selected `.rgignore`, `.ignore`, or `.gitignore` file to
+ripgrep.
 
-    g:ex_search_winsize
-    g:ex_search_winsize_zoom
-    g:ex_search_winpos
-    g:ex_search_enable_sort
-    g:ex_search_sort_lines_threshold
-    g:ex_search_globs
+                                                        *gsearch-highlights*
+Highlight groups ~
 
-Gsearch sets their exvim-lite defaults during plugin loading only when they are
-not already defined.  `g:ex_search_enable_sort` accepts 0 to disable sorting.
-
-`globs` and `g:ex_search_globs` are appended verbatim to the ripgrep command.
-Only supply trusted ripgrep arguments.
+Gsearch defines these highlight groups with a default link to `Visual`.  Define
+the groups after the plugin loads to override them: >lua
+    vim.api.nvim_set_hl(0, 'GsearchConfirm', { link = 'Search' })
+    vim.api.nvim_set_hl(0, 'GsearchTarget', { bg = '#3b4252' })
+<
+    GsearchConfirm              Selected result in the results window.
+    GsearchTarget               Target line after opening or previewing a
+                                 result.
 
 ==============================================================================
 6. Lua API                                                *gsearch-api*

@@ -7,7 +7,7 @@ describe('gsearch', function()
     assert.are.equal('table', type(gsearch))
   end)
 
-  it('registers GSearchCWord', function()
+  it('registers search commands without legacy global defaults', function()
     local commands = {}
     local previous_vim = _G.vim
     local previous_gsearch = package.loaded.gsearch
@@ -37,6 +37,12 @@ describe('gsearch', function()
     assert.is_truthy(commands.GSearchCWord)
     assert.is_nil(commands.EXSearchCWord)
     assert.are.equal(1, commands.GS.options.nargs)
+    assert.is_nil(vim.g.ex_search_winsize)
+    assert.is_nil(vim.g.ex_search_winsize_zoom)
+    assert.is_nil(vim.g.ex_search_winpos)
+    assert.is_nil(vim.g.ex_search_enable_sort)
+    assert.is_nil(vim.g.ex_search_sort_lines_threshold)
+    assert.is_nil(vim.g.ex_search_globs)
 
     commands.GS.callback({ args = 'needle' })
     commands.GSearchCWord.callback()

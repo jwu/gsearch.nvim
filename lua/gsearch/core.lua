@@ -1,4 +1,5 @@
 local api = vim.api
+local ignore = require 'gsearch.ignore'
 local results = require 'gsearch.results'
 local windows = require 'gsearch.window'
 
@@ -258,7 +259,11 @@ end
 ---@param config GsearchResolvedConfig
 local function search_command(pattern, config)
   local command = 'rg --no-heading --line-number --smart-case --no-ignore --hidden '
-    .. vim.fn.shellescape(pattern)
+  local ignore_file = ignore.find(vim.fn.getcwd())
+  if ignore_file then
+    command = command .. '--ignore-file ' .. vim.fn.shellescape(ignore_file) .. ' '
+  end
+  command = command .. vim.fn.shellescape(pattern)
   if config.globs ~= '' then
     command = command .. ' ' .. config.globs
   end
