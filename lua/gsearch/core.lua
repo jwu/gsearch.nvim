@@ -109,9 +109,7 @@ end
 
 local function render(lines)
   local buffer = assert(result_buffer)
-  api.nvim_set_option_value('modifiable', true, { buf = buffer })
   api.nvim_buf_set_lines(buffer, 0, -1, false, lines)
-  api.nvim_set_option_value('modifiable', false, { buf = buffer })
   highlight(buffer)
 end
 
@@ -193,7 +191,7 @@ local function initialize_buffer(buffer)
   api.nvim_set_option_value('bufhidden', 'hide', { buf = buffer })
   api.nvim_set_option_value('swapfile', false, { buf = buffer })
   api.nvim_set_option_value('buflisted', false, { buf = buffer })
-  api.nvim_set_option_value('modifiable', false, { buf = buffer })
+  api.nvim_set_option_value('modifiable', true, { buf = buffer })
   add_buffer_mappings(buffer)
 
   api.nvim_buf_create_user_command(buffer, 'R', function(command)
@@ -212,6 +210,12 @@ local function initialize_buffer(buffer)
   api.nvim_create_autocmd('BufWinLeave', {
     buffer = buffer,
     callback = reset_on_close,
+  })
+  api.nvim_create_autocmd('TextChanged', {
+    buffer = buffer,
+    callback = function()
+      highlight(buffer)
+    end,
   })
 end
 
@@ -344,6 +348,16 @@ end
 ---@param pattern string
 ---@param option 'pattern'|'file'
 ---@param reverse boolean
+---@return string
+local function filter_header(pattern, option, reverse)
+  local action = reverse and 'Exclude' or 'Filter'
+  local target = option == 'pattern' and 'text' or 'file'
+  return ('---------- %s %s: %s ----------'):format(action, target, pattern)
+end
+
+---@param pattern string
+---@param option 'pattern'|'file'
+---@param reverse boolean
 function M.filter(pattern, option, reverse)
   if pattern == '' then
     vim.notify(
@@ -362,9 +376,8 @@ function M.filter(pattern, option, reverse)
   local kept = {}
   local buffer = assert(result_buffer)
   local lines = api.nvim_buf_get_lines(buffer, #help_lines, -1, false)
-  local header = nil
   if lines[1] and not results.parse(lines[1]) then
-    header = table.remove(lines, 1)
+    table.remove(lines, 1)
   end
 
   for _, line in ipairs(lines) do
@@ -384,15 +397,13 @@ function M.filter(pattern, option, reverse)
 
   confirmed_line = nil
   local filtered_lines = vim.deepcopy(help_lines)
-  if header then
-    table.insert(filtered_lines, header)
-  end
+  table.insert(filtered_lines, filter_header(pattern, option, reverse))
   vim.list_extend(filtered_lines, kept)
   render(filtered_lines)
   focus_results()
   if #kept > 0 then
     api.nvim_win_set_cursor(assert(result_window), { #help_lines + 2, 0 })
-  elseif header then
+  else
     api.nvim_win_set_cursor(assert(result_window), { #help_lines + 1, 0 })
   end
   vim.notify(('gsearch: Filter %s: %s'):format(option, pattern), vim.log.levels.INFO)

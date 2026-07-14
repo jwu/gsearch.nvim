@@ -70,7 +70,8 @@ The first existing file is the only ignore file used.
 
 ### Results window
 
-A search opens a bottom split named `[GSearch Results]`. Its buffer-local
+A search opens a bottom split named `[GSearch Results]`. The buffer is
+modifiable, so native undo and redo restore filtering changes. Its buffer-local
 mappings are:
 
 | Key | Action |
@@ -78,6 +79,7 @@ mappings are:
 | `<F1>` | Toggle help |
 | `<Esc>` | Close results |
 | `<Space>` | Toggle normal/zoomed height |
+| `u` / `<C-r>` | Undo / redo result-buffer changes |
 | `<CR>` / double-click | Open the selected result, then return to results |
 | `<S-CR>` / Shift-double-click | Open the selected result in a preview window |
 | `<leader>r` / `<leader>fr` | Keep results matching the `/` register in text / file name |
@@ -88,6 +90,9 @@ expression:
 
 - `:R {pattern}` / `:FR {pattern}`: keep matching text / file names
 - `:D {pattern}` / `:FD {pattern}`: remove matching text / file names
+
+Each filter replaces the results header with its latest condition, such as
+`---------- Exclude text: TODO ----------`.
 
 Small result sets are sorted by file path and line number. When opening a
 result, Gsearch uses its recorded text to relocate the cursor if the file

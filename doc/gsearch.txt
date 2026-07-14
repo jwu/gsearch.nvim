@@ -42,13 +42,15 @@ Use `:checkhealth gsearch` to verify that ripgrep is available.
 4. Results window                                              *gsearch-results*
 
 A search opens a bottom split named `[GSearch Results]`.  The buffer is not
-listed, has no swap file, and is retained after the split is closed.
+listed, has no swap file, and is retained after the split is closed.  It is
+modifiable, so native undo and redo restore filtering changes.
 
 The following mappings are buffer-local; Gsearch creates no global mappings.
 
     <F1>                         Toggle the help text.
     <Esc>                        Close the results split.
     <Space>                      Toggle normal and zoomed window height.
+    u, <C-r>                     Undo or redo result-buffer changes.
     <CR>, <2-LeftMouse>          Open the selected result.
     <S-CR>, <S-2-LeftMouse>      Open the selected result in a preview window.
     <leader>r                    Keep text matching the `/` register.
@@ -63,6 +65,9 @@ regular expression:
     :FR {pattern}                Keep matching file names.
     :D {pattern}                 Remove matching result text.
     :FD {pattern}                Remove matching file names.
+
+Each filter replaces the results header with its latest condition, such as
+`---------- Exclude text: TODO ----------`.
 
 When opening the results split or selecting a result, Gsearch uses the latest
 recorded editing window from win-buf-op.nvim when that plugin is installed.
