@@ -260,9 +260,14 @@ local function open_window(config)
   end
 end
 
+local vcs_dirs = { '.git', '.svn', '.hg', '.bzr' }
+
 ---@param config GsearchResolvedConfig
 local function search_command(pattern, config)
   local command = 'rg --no-heading --line-number --smart-case --no-ignore --hidden '
+  for _, dir in ipairs(vcs_dirs) do
+    command = command .. '-g "!' .. dir .. '/**" '
+  end
   local ignore_file = ignore.find(vim.fn.getcwd())
   if ignore_file then
     command = command .. '--ignore-file ' .. vim.fn.shellescape(ignore_file) .. ' '
