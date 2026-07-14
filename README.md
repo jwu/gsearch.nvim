@@ -44,9 +44,11 @@ as the mappings above.
 
 Small result sets are sorted by file path and line number. Selecting a result
 uses its recorded text to relocate the cursor if the file changed after the
-search. When [win-buf-op.nvim](https://github.com/jwu/win-buf-op.nvim) is
-installed, Gsearch opens the result in its recorded last editing window;
-otherwise it uses the first current window with an empty `buftype`.
+search. When opening the results split or selecting a result,
+[win-buf-op.nvim](https://github.com/jwu/win-buf-op.nvim) is used to find its
+recorded last editing window. Otherwise Gsearch uses the current window when
+its `buftype` is empty, then Neovim's alternate window with an empty
+`buftype`, then the first current-tab window with an empty `buftype`.
 
 ## Configuration
 

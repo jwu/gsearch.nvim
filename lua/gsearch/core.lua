@@ -221,11 +221,15 @@ local function open_window(config)
     return
   end
 
-  local current_window = api.nvim_get_current_win()
-  if current_window ~= result_window then
-    edit_window = current_window
+  local edit = windows.last_edit_window()
+  if not edit then
+    local current_window = api.nvim_get_current_win()
+    if current_window ~= result_window then
+      edit_window = current_window
+    end
+    edit = get_edit_window()
   end
-  local edit = get_edit_window()
+  edit_window = edit
   api.nvim_set_current_win(edit)
   local placement = config.win_pos == 'top' and 'leftabove' or 'rightbelow'
   vim.cmd(('%s %dsplit'):format(placement, config.win_size))

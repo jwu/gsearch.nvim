@@ -19,9 +19,12 @@ describe('gsearch window', function()
     package.loaded['gsearch.window'] = nil
   end)
 
-  local function set_vim(windows, buftypes)
+  local function set_vim(windows, buftypes, current_window, alternate_window)
     _G.vim = {
       api = {
+        nvim_get_current_win = function()
+          return current_window
+        end,
         nvim_win_is_valid = function(window)
           return buftypes[window] ~= nil
         end,
@@ -35,11 +38,19 @@ describe('gsearch window', function()
           return windows
         end,
       },
+      fn = {
+        win_getid = function()
+          return alternate_window
+        end,
+        winnr = function()
+          return 1
+        end,
+      },
     }
   end
 
   it('uses win-buf-op last_edit_window when available', function()
-    set_vim({ 1, 2 }, { [1] = '', [2] = '' })
+    set_vim({ 1, 2 }, { [1] = '', [2] = '' }, 1, 1)
     package.loaded['win-buf-op'] = {
       last_edit_window = function()
         return 2
@@ -51,8 +62,30 @@ describe('gsearch window', function()
     assert.are.equal(2, window)
   end)
 
-  it('falls back to the first current editing window', function()
-    set_vim({ 1, 2, 3 }, { [1] = 'nofile', [2] = '', [3] = '' })
+  it('uses the current editing window when win-buf-op is unavailable', function()
+    set_vim({ 1, 2 }, { [1] = '', [2] = '' }, 2, 1)
+    package.preload['win-buf-op'] = function()
+      error 'win-buf-op is not installed'
+    end
+
+    local window = require('gsearch.window').last_edit_window()
+
+    assert.are.equal(2, window)
+  end)
+
+  it('falls back to the alternate editing window', function()
+    set_vim({ 1, 2, 3 }, { [1] = 'nofile', [2] = '', [3] = '' }, 1, 3)
+    package.preload['win-buf-op'] = function()
+      error 'win-buf-op is not installed'
+    end
+
+    local window = require('gsearch.window').last_edit_window()
+
+    assert.are.equal(3, window)
+  end)
+
+  it('falls back to the first editing window when alternate is extended', function()
+    set_vim({ 1, 2, 3 }, { [1] = 'nofile', [2] = '', [3] = '' }, 1, 1)
     package.preload['win-buf-op'] = function()
       error 'win-buf-op is not installed'
     end

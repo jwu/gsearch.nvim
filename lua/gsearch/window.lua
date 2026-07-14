@@ -21,6 +21,16 @@ function M.last_edit_window()
     end
   end
 
+  local current = vim.api.nvim_get_current_win()
+  if is_edit_window(current) then
+    return current
+  end
+
+  local alternate = vim.fn.win_getid(vim.fn.winnr '#')
+  if is_edit_window(alternate) then
+    return alternate
+  end
+
   for _, window in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
     if is_edit_window(window) then
       return window
