@@ -35,9 +35,8 @@ Use `:checkhealth gsearch` to verify that ripgrep is available.
 :GS {pattern}          Search for {pattern}.  This command is retained for
                        compatibility with exvim-lite.
 
-                                                                *:EXSearchCWord*
-:EXSearchCWord         Search for the word below the cursor.  This command is
-                       retained for compatibility with exvim-lite.
+                                                                 *:GSearchCWord*
+:GSearchCWord          Search for the word below the cursor.
 
 ==============================================================================
 4. Results window                                              *gsearch-results*

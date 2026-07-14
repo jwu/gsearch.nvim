@@ -17,12 +17,11 @@ directory and ripgrep with smart case, hidden files, and ignored files included.
 
 ```vim
 :GS pattern
-:EXSearchCWord
+:GSearchCWord
 ```
 
-`GS` and `EXSearchCWord` are retained for compatibility with exvim-lite.
-This plugin intentionally does not load `.exvim/config.json` or change the
-current working directory.
+`GS` is retained for compatibility with exvim-lite. This plugin intentionally
+does not load `.exvim/config.json` or change the current working directory.
 
 ### Results window
 

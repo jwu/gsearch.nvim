@@ -34,7 +34,7 @@ end, {
   desc = 'Search the current working directory with ripgrep',
 })
 
-vim.api.nvim_create_user_command('EXSearchCWord', function()
+vim.api.nvim_create_user_command('GSearchCWord', function()
   require('gsearch').search_cword()
 end, {
   desc = 'Search for the word below the cursor with ripgrep',
