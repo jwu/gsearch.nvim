@@ -1,14 +1,6 @@
----@class GsearchConfig
----@field win_size integer Height of the results window.
----@field win_size_zoom integer Height used when the results window is zoomed.
----@field win_pos 'top'|'bottom' Position of the results window.
----@field enable_sort boolean Sort small result sets by file and line number.
----@field sort_lines_threshold integer Maximum number of result lines to sort.
----@field globs string Additional ripgrep arguments, such as `-g '*.lua'`.
-
 local M = {}
 
----@type GsearchConfig
+---@type GsearchResolvedConfig
 local defaults = {
   win_size = 15,
   win_size_zoom = 40,
@@ -18,7 +10,7 @@ local defaults = {
   globs = '',
 }
 
----@type GsearchConfig
+---@type GsearchResolvedConfig
 local options = vim.deepcopy(defaults)
 
 ---@type table<string, boolean>
@@ -63,7 +55,7 @@ local function window_position(value)
   return value
 end
 
----@param user_options? table
+---@param user_options? GsearchConfig
 function M.setup(user_options)
   user_options = user_options or {}
   if type(user_options) ~= 'table' then
@@ -88,7 +80,7 @@ function M.setup(user_options)
   }
 end
 
----@return GsearchConfig
+---@return GsearchResolvedConfig
 function M.get()
   local config = vim.deepcopy(options)
 

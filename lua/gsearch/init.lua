@@ -9,6 +9,14 @@ local M = {}
 ---@field sort_lines_threshold? integer Maximum result lines to sort. Default: 100.
 ---@field globs? string Extra ripgrep arguments. Default: `''`.
 
+---@class GsearchResolvedConfig
+---@field win_size integer
+---@field win_size_zoom integer
+---@field win_pos 'top'|'bottom'
+---@field enable_sort boolean
+---@field sort_lines_threshold integer
+---@field globs string
+
 ---Configure gsearch. Calling this is optional.
 ---@param options? GsearchConfig
 function M.setup(options)

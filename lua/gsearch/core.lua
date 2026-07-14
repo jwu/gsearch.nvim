@@ -3,8 +3,11 @@ local results = require 'gsearch.results'
 
 local M = {}
 
+---@type integer|nil
 local result_buffer = nil
+---@type integer|nil
 local result_window = nil
+---@type integer|nil
 local edit_window = nil
 local help_open = false
 local zoomed = false
@@ -52,6 +55,24 @@ local function clear_target()
 end
 
 ---@param buffer integer
+---@param namespace integer
+---@param group string
+---@param row integer
+---@param start_column integer
+---@param end_column integer
+local function add_highlight(buffer, namespace, group, row, start_column, end_column)
+  if end_column == -1 then
+    local line = api.nvim_buf_get_lines(buffer, row, row + 1, false)[1] or ''
+    end_column = #line
+  end
+
+  api.nvim_buf_set_extmark(buffer, namespace, row, start_column, {
+    end_col = end_column,
+    hl_group = group,
+  })
+end
+
+---@param buffer integer
 local function highlight(buffer)
   api.nvim_buf_clear_namespace(buffer, result_namespace, 0, -1)
   local lines = api.nvim_buf_get_lines(buffer, 0, -1, false)
@@ -59,15 +80,15 @@ local function highlight(buffer)
   for index, line in ipairs(lines) do
     local row = index - 1
     if line:sub(1, 1) == '"' then
-      api.nvim_buf_add_highlight(buffer, result_namespace, 'Comment', row, 0, -1)
+      add_highlight(buffer, result_namespace, 'Comment', row, 0, -1)
     elseif line:match '^%-%-%-%-%-%-%-%-%-%-' then
-      api.nvim_buf_add_highlight(buffer, result_namespace, 'Title', row, 0, -1)
+      add_highlight(buffer, result_namespace, 'Title', row, 0, -1)
     else
       local filename, line_number = results.parse(line)
       if filename then
-        api.nvim_buf_add_highlight(buffer, result_namespace, 'Directory', row, 0, #filename)
+        add_highlight(buffer, result_namespace, 'Directory', row, 0, #filename)
         local number_start = #filename + 1
-        api.nvim_buf_add_highlight(
+        add_highlight(
           buffer,
           result_namespace,
           'Number',
@@ -80,22 +101,16 @@ local function highlight(buffer)
   end
 
   if confirmed_line then
-    api.nvim_buf_add_highlight(
-      buffer,
-      result_namespace,
-      'GsearchConfirm',
-      confirmed_line - 1,
-      0,
-      -1
-    )
+    add_highlight(buffer, result_namespace, 'GsearchConfirm', confirmed_line - 1, 0, -1)
   end
 end
 
 local function render(lines)
-  api.nvim_set_option_value('modifiable', true, { buf = result_buffer })
-  api.nvim_buf_set_lines(result_buffer, 0, -1, false, lines)
-  api.nvim_set_option_value('modifiable', false, { buf = result_buffer })
-  highlight(result_buffer)
+  local buffer = assert(result_buffer)
+  api.nvim_set_option_value('modifiable', true, { buf = buffer })
+  api.nvim_buf_set_lines(buffer, 0, -1, false, lines)
+  api.nvim_set_option_value('modifiable', false, { buf = buffer })
+  highlight(buffer)
 end
 
 ---@return integer
@@ -118,7 +133,7 @@ end
 
 local function focus_results()
   if result_window_valid() then
-    api.nvim_set_current_win(result_window)
+    api.nvim_set_current_win(assert(result_window))
   end
 end
 
@@ -131,7 +146,7 @@ end
 
 function M.close()
   if result_window_valid() then
-    api.nvim_set_current_win(result_window)
+    api.nvim_set_current_win(assert(result_window))
     vim.cmd 'close'
   end
 end
@@ -198,7 +213,7 @@ local function initialize_buffer(buffer)
   })
 end
 
----@param config GsearchConfig
+---@param config GsearchResolvedConfig
 local function open_window(config)
   if result_window_valid() then
     focus_results()
@@ -220,7 +235,9 @@ local function open_window(config)
     initialize_buffer(result_buffer)
   end
 
-  api.nvim_win_set_buf(result_window, result_buffer)
+  local window = assert(result_window)
+  local buffer = assert(result_buffer)
+  api.nvim_win_set_buf(window, buffer)
   vim.wo.winfixheight = true
   vim.wo.cursorline = true
   vim.wo.number = true
@@ -228,12 +245,12 @@ local function open_window(config)
   vim.wo.signcolumn = 'no'
   vim.wo.statusline = ''
 
-  if #api.nvim_buf_get_lines(result_buffer, 0, -1, false) == 0 then
+  if #api.nvim_buf_get_lines(buffer, 0, -1, false) == 0 then
     render(help_lines)
   end
 end
 
----@param config GsearchConfig
+---@param config GsearchResolvedConfig
 local function search_command(pattern, config)
   local command = 'rg --no-heading --line-number --smart-case --no-ignore --hidden '
     .. vim.fn.shellescape(pattern)
@@ -273,7 +290,7 @@ function M.search(pattern)
   })
   vim.list_extend(lines, matches)
   render(lines)
-  api.nvim_win_set_cursor(result_window, { #help_lines + 1, 0 })
+  api.nvim_win_set_cursor(assert(result_window), { #help_lines + 1, 0 })
   vim.cmd 'normal! zz'
 end
 
@@ -294,13 +311,14 @@ function M.toggle_help()
     return
   end
 
-  local lines = api.nvim_buf_get_lines(result_buffer, #help_lines, -1, false)
+  local buffer = assert(result_buffer)
+  local lines = api.nvim_buf_get_lines(buffer, #help_lines, -1, false)
   help_open = not help_open
   help_lines = help_open and vim.deepcopy(full_help) or vim.deepcopy(short_help)
   confirmed_line = nil
   render(vim.list_extend(vim.deepcopy(help_lines), lines))
   focus_results()
-  api.nvim_win_set_cursor(result_window, { 1, 0 })
+  api.nvim_win_set_cursor(assert(result_window), { 1, 0 })
 end
 
 function M.toggle_zoom()
@@ -310,7 +328,7 @@ function M.toggle_zoom()
 
   local config = require('gsearch.config').get()
   zoomed = not zoomed
-  api.nvim_win_set_height(result_window, zoomed and config.win_size_zoom or config.win_size)
+  api.nvim_win_set_height(assert(result_window), zoomed and config.win_size_zoom or config.win_size)
 end
 
 ---@param pattern string
@@ -332,7 +350,8 @@ function M.filter(pattern, option, reverse)
   end
 
   local kept = {}
-  local lines = api.nvim_buf_get_lines(result_buffer, #help_lines, -1, false)
+  local buffer = assert(result_buffer)
+  local lines = api.nvim_buf_get_lines(buffer, #help_lines, -1, false)
   local header = nil
   if lines[1] and not results.parse(lines[1]) then
     header = table.remove(lines, 1)
@@ -362,9 +381,9 @@ function M.filter(pattern, option, reverse)
   render(filtered_lines)
   focus_results()
   if #kept > 0 then
-    api.nvim_win_set_cursor(result_window, { #help_lines + 2, 0 })
+    api.nvim_win_set_cursor(assert(result_window), { #help_lines + 2, 0 })
   elseif header then
-    api.nvim_win_set_cursor(result_window, { #help_lines + 1, 0 })
+    api.nvim_win_set_cursor(assert(result_window), { #help_lines + 1, 0 })
   end
   vim.notify(('gsearch: Filter %s: %s'):format(option, pattern), vim.log.levels.INFO)
 end
@@ -375,32 +394,29 @@ function M.select(preview)
     return
   end
 
-  local cursor = api.nvim_win_get_cursor(result_window)
-  local line = api.nvim_buf_get_lines(result_buffer, cursor[1] - 1, cursor[1], false)[1]
+  local window = assert(result_window)
+  local buffer = assert(result_buffer)
+  local cursor = api.nvim_win_get_cursor(window)
+  local line = api.nvim_buf_get_lines(buffer, cursor[1] - 1, cursor[1], false)[1]
   local filename, line_number, text = results.parse(line)
-  if not filename or vim.fn.filereadable(filename) ~= 1 then
+  if not filename or not line_number or vim.fn.filereadable(filename) ~= 1 then
     vim.notify(('gsearch: %s not found!'):format(filename or line), vim.log.levels.WARN)
     return
   end
 
   confirmed_line = cursor[1]
-  highlight(result_buffer)
+  highlight(buffer)
   local edit = get_edit_window()
   api.nvim_set_current_win(edit)
 
   if preview then
     vim.cmd(('pedit +%d %s'):format(line_number, vim.fn.fnameescape(filename)))
-    pcall(vim.cmd, 'wincmd P')
+    pcall(function()
+      vim.cmd 'wincmd P'
+    end)
     if vim.wo.previewwindow then
       api.nvim_buf_clear_namespace(0, target_namespace, 0, -1)
-      api.nvim_buf_add_highlight(
-        0,
-        target_namespace,
-        'GsearchTarget',
-        api.nvim_win_get_cursor(0)[1] - 1,
-        0,
-        -1
-      )
+      add_highlight(0, target_namespace, 'GsearchTarget', api.nvim_win_get_cursor(0)[1] - 1, 0, -1)
       vim.cmd 'wincmd p'
     end
   else
@@ -414,14 +430,7 @@ function M.select(preview)
     end
     vim.cmd 'normal! zz'
     api.nvim_buf_clear_namespace(0, target_namespace, 0, -1)
-    api.nvim_buf_add_highlight(
-      0,
-      target_namespace,
-      'GsearchTarget',
-      api.nvim_win_get_cursor(0)[1] - 1,
-      0,
-      -1
-    )
+    add_highlight(0, target_namespace, 'GsearchTarget', api.nvim_win_get_cursor(0)[1] - 1, 0, -1)
   end
 
   focus_results()
